@@ -1,105 +1,104 @@
 {
-    "id": "/providers/Microsoft.Logic/galleries/public/templates/962f42368af84bd1ade21cbab02c1df5",
-    "type": "Microsoft.Logic/galleries/templates",
-    "name": "962f42368af84bd1ade21cbab02c1df5",
-    "properties": {
-        "author": {
-            "displayName": "Microsoft"
-        },
-        "categoryNames": [
-            "productivity"
-        ],
-        "description": "${Resources.TEMPLATE_OFFICE_TO_WUNDERLIST_DESCRIPTION}",
-        "displayName": "${Resources.TEMPLATE_OFFICE_TO_WUNDERLIST_DISPLAYNAME}",
-        "galleryName": "public",
-        "summary": "",
-        "definition": {
-            "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
-            "actions": {
-                "Create_a_task": {
-                    "inputs": {
-                        "body": {
-                            "list_id": null,
-                            "title": "@{triggerBody()['Subject']}"
+    "definition": {
+        "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+        "actions": {
+            "Add_a_to-do_(V2)": {
+                "inputs": {
+                    "body": {
+                        "Body": {
+                            "Content": "<p><strong>Alert:</strong> @{triggerBody()?['AlertDisplayName']} <br>\n<strong>Severity:</strong> @{triggerBody()?['Severity']}<br>\n<strong>Description:</strong> @{triggerBody()?['Description']}<br>\n<strong>Issuing Product:</strong> @{triggerBody()?['ProductName']}</p>",
+                            "ContentType": "HTML"
                         },
-                        "host": {
-                            "connection": {
-                                "name": "@parameters('$connections')['wunderlist']['connectionId']"
-                            }
+                        "DueDateTime": {
+                            "TimeZone": "UTC"
                         },
-                        "method": "post",
-                        "path": "/tasks"
+                        "Importance": "High",
+                        "ReminderDateTime": {
+                            "TimeZone": "UTC"
+                        },
+                        "StartDateTime": {
+                            "DateTime": "@triggerBody()?['TimeGenerated']",
+                            "TimeZone": "UTC"
+                        },
+                        "Status": "NotStarted",
+                        "Subject": "@{triggerBody()?['AlertDisplayName']} @{triggerBody()?['Severity']}"
                     },
-                    "runAfter": {},
-                    "type": "ApiConnection"
-                }
-            },
-            "contentVersion": "1.0.0.0",
-            "outputs": {},
-            "parameters": {
-                "$connections": {
-                    "defaultValue": {},
-                    "type": "Object"
-                }
-            },
-            "triggers": {
-                "On_new_email": {
-                    "inputs": {
-                        "host": {
-                            "connection": {
-                                "name": "@parameters('$connections')['office365']['connectionId']"
-                            }
-                        },
-                        "method": "get",
-                        "path": "/Mail/OnNewEmail",
-                        "queries": {
-                            "folderPath": "Inbox",
-                            "importance": "High"
+                    "host": {
+                        "connection": {
+                            "name": "@parameters('$connections')['todo']['connectionId']"
                         }
                     },
-                    "splitOn": "@triggerBody()?['value']",
-                    "recurrence": {
-                        "frequency": "Minute",
-                        "interval": 3
+                    "method": "post",
+                    "path": "/v2/tasks",
+                    "queries": {
+                        "folderId": "AAMkADE4ZjU4YTI2LWFiZmUtNGUyYS1iOWRlLTQ5ZTI1MTMzODBiOAAuAAAAAABi9RyUulBFQJ42I1eBpE2jAQBxGJ43DREARY9Pxi1ZKQVdAAEOn6uAAAA="
+                    }
+                },
+                "runAfter": {
+                    "Get_my_profile": [
+                        "Succeeded"
+                    ]
+                },
+                "type": "ApiConnection"
+            },
+            "Get_my_profile": {
+                "inputs": {
+                    "host": {
+                        "connection": {
+                            "name": "@parameters('$connections')['office365users']['connectionId']"
+                        }
                     },
-                    "type": "ApiConnection"
-                }
+                    "method": "get",
+                    "path": "/users/me"
+                },
+                "runAfter": {},
+                "type": "ApiConnection"
             }
         },
-        "connectionReferences": {
-            "office365": {
-                "connection": {
-                    "id": ""
-                },
-                "api": {
-                    "id": "/subscriptions/{0}/providers/Microsoft.Web/locations/{1}/managedApis/office365"
-                }
-            },
-            "wunderlist": {
-                "connection": {
-                    "id": ""
-                },
-                "api": {
-                    "id": "/subscriptions/{0}/providers/Microsoft.Web/locations/{1}/managedApis/wunderlist"
-                }
+        "contentVersion": "1.0.0.0",
+        "outputs": {},
+        "parameters": {
+            "$connections": {
+                "defaultValue": {},
+                "type": "Object"
             }
         },
-        "apiSummaries": [
-            {
-                "type": "apiconnection",
-                "displayName": "${Resources.OFFICE}",
-                "iconUri": "https://connectoricons-prod.azureedge.net/office365/icon_1.0.1008.1183.png",
-                "brandColor": "#0072c5"
-            },
-            {
-                "type": "apiconnection",
-                "displayName": "${Resources.WUNDERLIST}",
-                "iconUri": "https://az818438.vo.msecnd.net/icons/wunderlist.png",
-                "brandColor": "#de4c40"
+        "triggers": {
+            "When_a_response_to_an_Azure_Sentinel_alert_is_triggered": {
+                "inputs": {
+                    "body": {
+                        "callback_url": "@{listCallbackUrl()}"
+                    },
+                    "host": {
+                        "connection": {
+                            "name": "@parameters('$connections')['azuresentinel']['connectionId']"
+                        }
+                    },
+                    "path": "/subscribe"
+                },
+                "type": "ApiConnectionWebhook"
             }
-        ],
-        "changedTime": "2017-07-05T00:00:37.000Z",
-        "createdTime": "2017-01-31T00:00:37.000Z",
-        "popularity": 23
+        }
+    },
+    "parameters": {
+        "$connections": {
+            "value": {
+                "azuresentinel": {
+                    "connectionId": "/subscriptions/2959f496-711b-447e-9b85-53a1da341c4c/resourceGroups/RodAzureSentinel/providers/Microsoft.Web/connections/azuresentinel",
+                    "connectionName": "azuresentinel",
+                    "id": "/subscriptions/2959f496-711b-447e-9b85-53a1da341c4c/providers/Microsoft.Web/locations/eastus/managedApis/azuresentinel"
+                },
+                "office365users": {
+                    "connectionId": "/subscriptions/2959f496-711b-447e-9b85-53a1da341c4c/resourceGroups/RodAzureSentinel/providers/Microsoft.Web/connections/office365users",
+                    "connectionName": "office365users",
+                    "id": "/subscriptions/2959f496-711b-447e-9b85-53a1da341c4c/providers/Microsoft.Web/locations/eastus/managedApis/office365users"
+                },
+                "todo": {
+                    "connectionId": "/subscriptions/2959f496-711b-447e-9b85-53a1da341c4c/resourceGroups/RodAzureSentinel/providers/Microsoft.Web/connections/todo",
+                    "connectionName": "todo",
+                    "id": "/subscriptions/2959f496-711b-447e-9b85-53a1da341c4c/providers/Microsoft.Web/locations/eastus/managedApis/todo"
+                }
+            }
+        }
     }
 }
